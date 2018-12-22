@@ -1,29 +1,43 @@
 package rsrp
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 )
+
+// RedirectRequest copies a request and changes the URL
+func RedirectRequest(r *http.Request, newURL string) (newRequest *http.Request, err error) {
+	newRequest, err = http.NewRequest(r.Method, newURL, r.Body)
+	if err != nil {
+		return
+	}
+
+	newRequest = newRequest.WithContext(r.Context())
+
+	for k, vs := range r.Header {
+		for _, v := range vs {
+			newRequest.Header.Add(k, v)
+		}
+	}
+
+	for _, c := range r.Cookies() {
+		newRequest.AddCookie(c)
+	}
+
+	return
+}
 
 // RouteAll routes all requests based on the RouteRules provided
 func RouteAll(rules []RouteRule) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		for _, rule := range rules {
 			if rule.Match.MatchString(r.URL.Path) {
-				newPath := rule.Rewrite.Source.ReplaceAllString(r.URL.Path, rule.Rewrite.Destination)
-				newURL := fmt.Sprintf("%s%s", rule.Destination, newPath)
+				newURL := rule.RewriteRequestLocation(r.URL.Path)
 
-				newRequest, err := http.NewRequest(r.Method, newURL, r.Body)
+				newRequest, err := RedirectRequest(r, newURL)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
-				}
-
-				for k, vs := range r.Header {
-					for _, v := range vs {
-						newRequest.Header.Add(k, v)
-					}
 				}
 
 				client := &http.Client{}
