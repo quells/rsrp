@@ -1,6 +1,7 @@
 package rsrp
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -64,6 +65,7 @@ func RouteAll(rules []RouteRule) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 		}
-		w.Write([]byte(r.URL.Path))
+
+		http.Error(w, fmt.Sprintf("no route found for %s", r.URL.Path), http.StatusNotFound)
 	}
 }
