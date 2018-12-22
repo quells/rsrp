@@ -32,7 +32,7 @@ func RouteAll(rules []RouteRule) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		for _, rule := range rules {
 			if rule.Match.MatchString(r.URL.Path) {
-				newURL := rule.RewriteRequestLocation(r.URL.Path)
+				newURL := rule.RewriteLocation(r.URL.Path)
 
 				newRequest, err := RedirectRequest(r, newURL)
 				if err != nil {
