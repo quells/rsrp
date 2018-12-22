@@ -128,5 +128,72 @@ func TestRouteAll(t *testing.T) {
 			t.Fatalf("RouteAll() expected %s to yield %s, got %s", tc.path, tc.expected, body)
 		}
 	}
+}
 
+func BenchmarkRouteAll(b *testing.B) {
+	serverA := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := fmt.Sprintf("A: %s", r.URL.Path)
+		w.Write([]byte(response))
+	}))
+	defer serverA.Close()
+
+	serverB := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := fmt.Sprintf("B: %s", r.URL.Path)
+		w.Write([]byte(response))
+	}))
+	defer serverB.Close()
+
+	configStr := fmt.Sprintf(`
+	{
+		"routes": [
+			{
+				"match": "^\/abc\/?.*$",
+				"rewrite": {
+					"src": "^\/abc(\/?.*)$",
+					"dest": "$1"
+				},
+				"destination": "%s"
+			},
+			{
+				"match": "^\/xyz\/?.*$",
+				"rewrite": {
+					"src": "^\/xyz(\/?.*)$",
+					"dest": "/etc$1"
+				},
+				"destination": "%s"
+			}
+		]
+	}
+	`, serverA.URL, serverB.URL)
+	config := &rsrp.Config{}
+	_ = json.Unmarshal([]byte(configStr), config)
+
+	routes, _ := rsrp.ConvertRules(config.Routes)
+
+	server := httptest.NewServer(http.HandlerFunc(rsrp.RouteAll(*routes)))
+	defer server.Close()
+
+	client := server.Client()
+
+	url := server.URL + "/xyz/test"
+
+	var resp *http.Response
+	var err error
+	var data []byte
+	var body string
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		resp, err = client.Get(url)
+		if err != nil {
+			b.FailNow()
+		}
+		data, _ = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		body = string(data)
+		if body != "B: /etc/test" {
+			b.FailNow()
+		}
+	}
 }
