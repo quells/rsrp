@@ -14,6 +14,6 @@ type RouteRuleConfig struct {
 
 // A RewriteRuleConfig is the on-disk representation of a RewriteRule
 type RewriteRuleConfig struct {
-	Source      string `json:"src"`
-	Destination string `json:"dest"`
+	Input  string `json:"from"`
+	Output string `json:"to"`
 }

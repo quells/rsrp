@@ -3,16 +3,16 @@
         {
             "match": "^/plaintext/?.*$",
             "rewrite": {
-                "src": "^/plaintext(/?.*)$",
-                "dest": "$1"
+                "from": "^/plaintext(/?.*)$",
+                "to": "$1"
             },
             "destination": "http://localhost:5001"
         },
         {
             "match": "^/json/?.*$",
             "rewrite": {
-                "src": "^/json(/?.*)$",
-                "dest": "$1"
+                "from": "^/json(/?.*)$",
+                "to": "$1"
             },
             "destination": "http://localhost:5002"
         }

@@ -56,7 +56,7 @@ func NewRouteRule(config RouteRuleConfig) (rule *RouteRule, err error) {
 
 // RewritePath converts a request path to the redirected path
 func (rule RouteRule) RewritePath(path string) string {
-	return rule.Rewrite.Source.ReplaceAllString(path, rule.Rewrite.Destination)
+	return rule.Rewrite.Input.ReplaceAllString(path, rule.Rewrite.Output)
 }
 
 // RewriteLocation converts a request path to the redirected location
@@ -66,21 +66,21 @@ func (rule RouteRule) RewriteLocation(path string) string {
 
 // A RewriteRule describes how to modify the path for a request
 type RewriteRule struct {
-	Source      *regexp.Regexp
-	Destination string
+	Input  *regexp.Regexp
+	Output string
 }
 
 // NewRewriteRule converts a RewriteRuleConfig to a RewriteRule
 func NewRewriteRule(config RewriteRuleConfig) (rule *RewriteRule, err error) {
-	var src *regexp.Regexp
-	src, err = regexp.Compile(config.Source)
+	var input *regexp.Regexp
+	input, err = regexp.Compile(config.Input)
 	if err != nil {
 		return
 	}
 
 	rule = &RewriteRule{
-		Source:      src,
-		Destination: config.Destination,
+		Input:  input,
+		Output: config.Output,
 	}
 
 	return

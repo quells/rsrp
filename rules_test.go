@@ -11,8 +11,8 @@ func TestRouteRule_RewritePath(t *testing.T) {
 	rule := rsrp.RouteRule{
 		Match: regexp.MustCompile("^/test.*$"),
 		Rewrite: rsrp.RewriteRule{
-			Source:      regexp.MustCompile("^/test(/.*)$"),
-			Destination: "/new$1",
+			Input:  regexp.MustCompile("^/test(/.*)$"),
+			Output: "/new$1",
 		},
 		Destination: "http://other",
 	}
@@ -29,8 +29,8 @@ func TestRouteRule_RewriteLocation(t *testing.T) {
 	rule := rsrp.RouteRule{
 		Match: regexp.MustCompile("^/test.*$"),
 		Rewrite: rsrp.RewriteRule{
-			Source:      regexp.MustCompile("^/test(/.*)$"),
-			Destination: "/new$1",
+			Input:  regexp.MustCompile("^/test(/.*)$"),
+			Output: "/new$1",
 		},
 		Destination: "http://other",
 	}

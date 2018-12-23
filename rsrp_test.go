@@ -77,16 +77,16 @@ func TestRouteAll(t *testing.T) {
 			{
 				"match": "^\/abc\/?.*$",
 				"rewrite": {
-					"src": "^\/abc(\/?.*)$",
-					"dest": "$1"
+					"from": "^\/abc(\/?.*)$",
+					"to": "$1"
 				},
 				"destination": "%s"
 			},
 			{
 				"match": "^\/xyz\/?.*$",
 				"rewrite": {
-					"src": "^\/xyz(\/?.*)$",
-					"dest": "/etc$1"
+					"from": "^\/xyz(\/?.*)$",
+					"to": "/etc$1"
 				},
 				"destination": "%s"
 			}
@@ -149,16 +149,16 @@ func BenchmarkRouteAll(b *testing.B) {
 			{
 				"match": "^\/abc\/?.*$",
 				"rewrite": {
-					"src": "^\/abc(\/?.*)$",
-					"dest": "$1"
+					"from": "^\/abc(\/?.*)$",
+					"to": "$1"
 				},
 				"destination": "%s"
 			},
 			{
 				"match": "^\/xyz\/?.*$",
 				"rewrite": {
-					"src": "^\/xyz(\/?.*)$",
-					"dest": "/etc$1"
+					"from": "^\/xyz(\/?.*)$",
+					"to": "/etc$1"
 				},
 				"destination": "%s"
 			}
