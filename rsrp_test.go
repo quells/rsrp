@@ -67,6 +67,10 @@ func TestRouteAll(t *testing.T) {
 
 	serverB := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := fmt.Sprintf("B: %s", r.URL.Path)
+		query := r.URL.Query().Encode()
+		if len(query) > 0 {
+			response += fmt.Sprintf(" %s", query)
+		}
 		w.Write([]byte(response))
 	}))
 	defer serverB.Close()
@@ -110,6 +114,8 @@ func TestRouteAll(t *testing.T) {
 		{"/abc", "A: /"},
 		{"/xyz/test", "B: /etc/test"},
 		{"/xyz", "B: /etc"},
+		{"/xyz/test?q=ok", "B: /etc/test q=ok"},
+		{"/xyz?q=ok", "B: /etc q=ok"},
 	}
 
 	var resp *http.Response

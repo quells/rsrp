@@ -22,6 +22,8 @@ func RedirectRequest(r *http.Request, newURL string) (newRequest *http.Request, 
 		}
 	}
 
+	newRequest.URL.RawQuery = r.URL.Query().Encode()
+
 	for _, c := range r.Cookies() {
 		newRequest.AddCookie(c)
 	}
