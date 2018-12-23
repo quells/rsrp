@@ -52,6 +52,7 @@ func handleNoContent(w http.ResponseWriter, r *http.Request) {
 type EchoResponse struct {
 	Method  string              `json:"method"`
 	Path    string              `json:"path"`
+	Query   map[string][]string `json:"query"`
 	Headers map[string][]string `json:"headers"`
 	Body    *interface{}        `json:"body"`
 }
@@ -91,9 +92,15 @@ func handleEcho(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	query := make(map[string][]string)
+	for k, v := range r.URL.Query() {
+		query[k] = v
+	}
+
 	response := EchoResponse{
 		Method:  r.Method,
 		Path:    r.URL.Path,
+		Query:   query,
 		Headers: r.Header,
 		Body:    body,
 	}
