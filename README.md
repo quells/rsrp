@@ -6,7 +6,7 @@ Note that this is best suited for API servers; HTML becomes more difficult becau
 
 ## Example
 
-See [the example project](tree/master/example) with a small HTTP server using `rsrp` to proxy two other simple HTTP services.
+See [the example project](blob/master/example) with a small HTTP server using `rsrp` to proxy two other simple HTTP services.
 
 ## Configuration Specification
 
