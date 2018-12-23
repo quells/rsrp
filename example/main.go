@@ -30,6 +30,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	// This is the only line which uses rsrp;
+	// everything else is just parsing command line arguments and setting up the HTTP server.
 	http.HandleFunc("/", rsrp.RouteAll(*routes))
 
 	httpServer := &http.Server{
