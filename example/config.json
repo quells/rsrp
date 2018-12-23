@@ -1,17 +1,17 @@
 {
     "routes": [
         {
-            "match": "^\/plaintext\/?.*$",
+            "match": "^/plaintext/?.*$",
             "rewrite": {
-                "src": "^\/plaintext(\/?.*)$",
+                "src": "^/plaintext(/?.*)$",
                 "dest": "$1"
             },
             "destination": "http://localhost:5001"
         },
         {
-            "match": "^\/json\/?.*$",
+            "match": "^/json/?.*$",
             "rewrite": {
-                "src": "^\/json(\/?.*)$",
+                "src": "^/json(/?.*)$",
                 "dest": "$1"
             },
             "destination": "http://localhost:5002"
