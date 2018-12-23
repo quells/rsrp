@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 )
 
 // RedirectRequest copies a request and changes the URL
@@ -30,6 +31,8 @@ func RedirectRequest(r *http.Request, newURL string) (newRequest *http.Request, 
 
 // RouteAll routes all requests based on the RouteRules provided
 func RouteAll(rules []RouteRule) func(http.ResponseWriter, *http.Request) {
+	connectionRefused := regexp.MustCompile("connection refused")
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		for _, rule := range rules {
 			if rule.Match.MatchString(r.URL.Path) {
@@ -42,8 +45,14 @@ func RouteAll(rules []RouteRule) func(http.ResponseWriter, *http.Request) {
 				}
 
 				client := &http.Client{}
+
 				resp, err := client.Do(newRequest)
 				if err != nil {
+					if connectionRefused.MatchString(err.Error()) {
+						http.Error(w, "connection refused for "+r.URL.Path, http.StatusBadGateway)
+						return
+					}
+
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
