@@ -50,9 +50,10 @@ func handleNoContent(w http.ResponseWriter, r *http.Request) {
 
 // EchoResponse is the response for an echo request
 type EchoResponse struct {
+	Method  string              `json:"method"`
 	Path    string              `json:"path"`
 	Headers map[string][]string `json:"headers"`
-	Body    *string             `json:"body"`
+	Body    *interface{}        `json:"body"`
 }
 
 // Serialize converts a EchoResponse to JSON bytes
@@ -62,28 +63,36 @@ func (r EchoResponse) Serialize() []byte {
 }
 
 func handleEcho(w http.ResponseWriter, r *http.Request) {
-	var body *string
+	var body *interface{}
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		copy := err.Error()
+		copy := interface{}(err.Error())
 		body = &copy
 	} else {
-		done := make(chan bool)
-		go func() {
-			copy := string(data)
-			body = &copy
-			done <- true
-
-			if recover() != nil {
-				msg := fmt.Sprintf("%v", data)
-				body = &msg
+		jsonified := &map[string]interface{}{}
+		err = json.Unmarshal(data, jsonified)
+		if err != nil {
+			done := make(chan bool)
+			go func() {
+				copy := interface{}(string(data))
+				body = &copy
 				done <- true
-			}
-		}()
-		_ = <-done
+
+				if recover() != nil {
+					msg := interface{}(fmt.Sprintf("%v", data))
+					body = &msg
+					done <- true
+				}
+			}()
+			_ = <-done
+		} else {
+			copy := interface{}(jsonified)
+			body = &copy
+		}
 	}
 
 	response := EchoResponse{
+		Method:  r.Method,
 		Path:    r.URL.Path,
 		Headers: r.Header,
 		Body:    body,
