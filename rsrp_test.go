@@ -1,4 +1,4 @@
-package rsrp
+package rsrp_test
 
 import (
 	"context"
@@ -24,7 +24,7 @@ func TestRedirectRequest(t *testing.T) {
 		Value: "Monster",
 	})
 
-	redirected, err := RedirectRequest(request, "http://localhost:3000/new/me")
+	redirected, err := rsrp.RedirectRequest(request, "http://localhost:3000/new/me")
 
 	cancel()
 
