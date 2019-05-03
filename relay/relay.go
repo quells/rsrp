@@ -69,14 +69,14 @@ type Pump struct {
 	options            Options
 }
 
-// Options includes some
+// Options includes constants for pumping messages between two WebSocket connections
 type Options struct {
 	Upgrader                        websocket.Upgrader
 	WriteWait, PongWait, PingPeriod time.Duration
 	MaxMessageSize                  int64
 }
 
-// DefaultOptions creates default relay options
+// DefaultOptions returns default relay.Option
 func DefaultOptions() Options {
 	return Options{
 		Upgrader:       websocket.Upgrader{},
@@ -94,6 +94,7 @@ func NewPump(external, internal *websocket.Conn, options Options) Pump {
 	return Pump{external, internal, inbound, outbound, options}
 }
 
+// read pipes messages from a WebSocket connection to a channel
 func (p *Pump) read(forExternal bool) {
 	var conn *websocket.Conn
 	var channel chan message
@@ -126,6 +127,8 @@ func (p *Pump) read(forExternal bool) {
 	}
 }
 
+// write pipes messages from a pump's channels to its WebSocket connections.
+// It also periodically sends out ping messages to its WebSocket connections.
 func (p *Pump) write() {
 	externalTicker := time.NewTicker(p.options.PingPeriod)
 	internalTicker := time.NewTicker(p.options.PingPeriod)
