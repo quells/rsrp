@@ -11,24 +11,23 @@ import (
 
 // Handler handles a single rerouted WebSocket connection
 type Handler struct {
-	targetURL   string
-	upgrader    websocket.Upgrader
-	pumpOptions PumpOptions
+	targetURL string
+	Options   Options
 }
 
 // DefaultHandler creates a new relay.Handler targeting a given URL with default options
 func DefaultHandler(targetURL string) Handler {
-	return NewHandler(targetURL, websocket.Upgrader{}, DefaultPumpOptions())
+	return NewHandler(targetURL, DefaultOptions())
 }
 
 // NewHandler creates a new relay.Handler targeting a given URL
-func NewHandler(targetURL string, upgrader websocket.Upgrader, pumpOptions PumpOptions) Handler {
-	return Handler{targetURL, upgrader, pumpOptions}
+func NewHandler(targetURL string, options Options) Handler {
+	return Handler{targetURL, options}
 }
 
 // ServeHTTP conforms relay.Handler to http.Handler
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	external, err := h.upgrader.Upgrade(w, r, nil)
+	external, err := h.Options.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "could not upgrade to websocket", http.StatusBadRequest)
 		return
@@ -52,7 +51,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	pump := NewPump(external, internal, h.pumpOptions)
+	pump := NewPump(external, internal, h.Options)
 	go pump.read(true)
 	go pump.read(false)
 	go pump.write()
@@ -67,18 +66,20 @@ type message struct {
 type Pump struct {
 	external, internal *websocket.Conn
 	inbound, outbound  chan message
-	options            PumpOptions
+	options            Options
 }
 
-// PumpOptions includes some
-type PumpOptions struct {
+// Options includes some
+type Options struct {
+	Upgrader                        websocket.Upgrader
 	WriteWait, PongWait, PingPeriod time.Duration
-	MaxMessageSize                  int
+	MaxMessageSize                  int64
 }
 
-// DefaultPumpOptions creates default relay.Pump options
-func DefaultPumpOptions() PumpOptions {
-	return PumpOptions{
+// DefaultOptions creates default relay options
+func DefaultOptions() Options {
+	return Options{
+		Upgrader:       websocket.Upgrader{},
 		WriteWait:      10 * time.Second,
 		PongWait:       60 * time.Second,
 		PingPeriod:     54 * time.Second,
@@ -87,7 +88,7 @@ func DefaultPumpOptions() PumpOptions {
 }
 
 // NewPump creates a new relay.Pump between two WebSocket connections
-func NewPump(external, internal *websocket.Conn, options PumpOptions) Pump {
+func NewPump(external, internal *websocket.Conn, options Options) Pump {
 	inbound := make(chan message)
 	outbound := make(chan message)
 	return Pump{external, internal, inbound, outbound, options}
@@ -107,6 +108,13 @@ func (p *Pump) read(forExternal bool) {
 	defer func() {
 		conn.Close()
 	}()
+
+	conn.SetReadLimit(p.options.MaxMessageSize)
+	conn.SetReadDeadline(time.Now().Add(p.options.PongWait))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(p.options.PongWait))
+		return nil
+	})
 
 	for {
 		messageType, body, err := conn.ReadMessage()

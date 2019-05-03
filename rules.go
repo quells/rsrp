@@ -2,6 +2,8 @@ package rsrp
 
 import (
 	"regexp"
+
+	"github.com/quells/rsrp/relay"
 )
 
 // ConvertRules converts RouteRuleConfigs to RouteRules
@@ -26,9 +28,10 @@ func ConvertRules(routes []RouteRuleConfig) (routeRules *[]RouteRule, err error)
 // A RouteRule describes which paths to match, how to rewrite the request,
 // and where to reroute the request
 type RouteRule struct {
-	Match       *regexp.Regexp
-	Rewrite     RewriteRule
-	Destination string
+	Match            *regexp.Regexp
+	Rewrite          RewriteRule
+	Destination      string
+	WebSocketOptions relay.Options
 }
 
 // NewRouteRule converts a RouteRuleConfig to a RouteRule
@@ -46,9 +49,10 @@ func NewRouteRule(config RouteRuleConfig) (rule *RouteRule, err error) {
 	}
 
 	rule = &RouteRule{
-		Match:       match,
-		Rewrite:     *rewrite,
-		Destination: config.Destination,
+		Match:            match,
+		Rewrite:          *rewrite,
+		Destination:      config.Destination,
+		WebSocketOptions: relay.DefaultOptions(),
 	}
 
 	return
