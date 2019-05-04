@@ -49,7 +49,7 @@ func RouteAll(rules []RouteRule) func(http.ResponseWriter, *http.Request) {
 
 				if newURL.Scheme == "ws" || newURL.Scheme == "wss" {
 					handler := relay.NewHandler(newURL.String(), rule.WebSocketOptions)
-					go handler.ServeHTTP(w, r)
+					handler.ServeHTTP(w, r)
 					return
 				}
 

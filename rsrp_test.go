@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/quells/rsrp"
+	"github.com/quells/rsrp/relay"
 )
 
 func TestRedirectRequest(t *testing.T) {
@@ -200,6 +204,83 @@ func BenchmarkRouteAll(b *testing.B) {
 		body = string(data)
 		if body != "B: /etc/test" {
 			b.FailNow()
+		}
+	}
+}
+
+func TestWebsocketRoute(t *testing.T) {
+	hiddenListener, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		t.Fatalf("could not create TCP listener: %v", err)
+	}
+	defer hiddenListener.Close()
+
+	hiddenServer := &http.Server{
+		Handler:      relay.EchoServer{},
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+	}
+	defer hiddenServer.Close()
+
+	go func() {
+		if err := hiddenServer.Serve(hiddenListener); err != http.ErrServerClosed {
+			t.Fatalf("failed to start echo server: %v", err)
+		}
+	}()
+
+	hiddenURL := "ws://" + hiddenListener.Addr().String()
+
+	rule := rsrp.RouteRule{
+		Match: regexp.MustCompile("^/ws$"),
+		Rewrite: rsrp.RewriteRule{
+			Input:  regexp.MustCompile("^(/ws)$"),
+			Output: "",
+		},
+		Destination:      hiddenURL,
+		WebSocketOptions: relay.DefaultOptions(),
+	}
+
+	l, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		t.Fatalf("could not create TCP listener: %v", err)
+	}
+	defer l.Close()
+
+	server := &http.Server{
+		Handler:      http.HandlerFunc(rsrp.RouteAll([]rsrp.RouteRule{rule})),
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+	}
+	defer server.Close()
+
+	go func() {
+		if err := server.Serve(l); err != http.ErrServerClosed {
+			t.Fatalf("failed to start proxy server: %v", err)
+		}
+	}()
+
+	url := "ws://" + l.Addr().String() + "/ws"
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+	if err != nil {
+		t.Fatalf("could not connect to echo server: %v", err)
+	}
+	defer conn.Close()
+
+	for i := 0; i < 5; i++ {
+		conn.SetWriteDeadline(time.Now().Add(time.Second))
+		payload := fmt.Sprintf("%d", i)
+		err := conn.WriteMessage(websocket.TextMessage, []byte(payload))
+		if err != nil {
+			t.Fatalf("could not send message: %v", err)
+		}
+
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			t.Fatalf("could not read message: %v", err)
+		}
+		response := string(msg)
+		if response != payload {
+			t.Fatalf("expected %s, got %s", payload, response)
 		}
 	}
 }
