@@ -26,9 +26,9 @@ func (s EchoServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			conn.Close()
 		}()
 
-		conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+		conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 		conn.SetPongHandler(func(string) error {
-			conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 			return nil
 		})
 
@@ -43,7 +43,7 @@ func (s EchoServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}(conn, echo)
 
 	go func(c *websocket.Conn, e chan message) {
-		ticker := time.NewTicker(2 * time.Second)
+		ticker := time.NewTicker(20 * time.Second)
 		defer func() {
 			ticker.Stop()
 			conn.Close()
@@ -53,7 +53,7 @@ func (s EchoServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		for {
 			select {
 			case msg, ok := <-e:
-				conn.SetWriteDeadline(time.Now().Add(1 * time.Second))
+				conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 				if !ok {
 					conn.WriteMessage(websocket.CloseMessage, []byte{})
 				}
@@ -64,7 +64,7 @@ func (s EchoServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 			case <-ticker.C:
-				conn.SetWriteDeadline(time.Now().Add(1 * time.Second))
+				conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					return
 				}

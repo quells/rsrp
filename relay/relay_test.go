@@ -60,7 +60,7 @@ func TestHandler(t *testing.T) {
 	}
 	defer conn.Close()
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 100; i++ {
 		conn.SetWriteDeadline(time.Now().Add(time.Second))
 		payload := fmt.Sprintf("%d", i)
 		err := conn.WriteMessage(websocket.TextMessage, []byte(payload))
