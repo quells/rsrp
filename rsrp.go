@@ -47,7 +47,7 @@ func RouteAll(rules []RouteRule) func(http.ResponseWriter, *http.Request) {
 					return
 				}
 
-				if newURL.Scheme == "ws" || newURL.Scheme == "wss" {
+				if r.Header.Get("Connection") == "Upgrade" && r.Header.Get("Upgrade") == "websocket" {
 					handler := relay.NewHandler(newURL.String(), rule.WebSocketOptions)
 					handler.ServeHTTP(w, r)
 					return

@@ -45,10 +45,10 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				w.Write(responseBody)
 			}
-		} else {
-			http.Error(w, "could not upgrade internal connection", http.StatusInternalServerError)
-			return
 		}
+
+		http.Error(w, "could not upgrade internal connection", http.StatusInternalServerError)
+		return
 	}
 
 	pump := NewPump(external, internal, h.Options)
