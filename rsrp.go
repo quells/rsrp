@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"regexp"
+
+	"github.com/quells/rsrp/relay"
 )
 
 // RedirectRequest copies a request and changes the URL
@@ -38,9 +41,19 @@ func RouteAll(rules []RouteRule) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		for _, rule := range rules {
 			if rule.Match.MatchString(r.URL.Path) {
-				newURL := rule.RewriteLocation(r.URL.Path)
+				newURL, err := url.Parse(rule.RewriteLocation(r.URL.Path))
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 
-				newRequest, err := RedirectRequest(r, newURL)
+				if newURL.Scheme == "ws" || newURL.Scheme == "wss" {
+					handler := relay.NewHandler(newURL.String(), rule.WebSocketOptions)
+					handler.ServeHTTP(w, r)
+					return
+				}
+
+				newRequest, err := RedirectRequest(r, newURL.String())
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
