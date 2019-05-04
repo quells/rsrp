@@ -41,6 +41,10 @@ Each route has a destination, which must have the scheme and hostname of the des
 
 ## Version History
 
+### 1.1.1 (2019-05-04)
+
+- Bugfix for handling WebSockets
+
 ### 1.1.0 (2019-05-03)
 
 - Initial support for WebSockets
