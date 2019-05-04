@@ -41,6 +41,10 @@ Each route has a destination, which must have the scheme and hostname of the des
 
 ## Version History
 
+### 1.1.0 (2019-05-03)
+
+- Initial support for WebSockets
+
 ### 1.0 (2018-12-22)
 
 - MVP reverse proxy with simple regex-based rewrite rules
